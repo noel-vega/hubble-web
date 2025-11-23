@@ -167,13 +167,16 @@ function RouteComponent() {
 			<div className="border-b border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950">
 				<div className="max-w-7xl mx-auto px-6 py-6">
 					<div className="flex items-center justify-between">
-						<div>
-							<h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-								Containers
-							</h1>
-							<p className="text-sm text-slate-500 dark:text-slate-500 mt-0.5">
-								{auth.username}
-							</p>
+						<div className="flex items-center gap-3">
+							<span className="text-2xl">🔭</span>
+							<div>
+								<h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+									Containers
+								</h1>
+								<p className="text-sm text-slate-500 dark:text-slate-500 mt-0.5">
+									{auth.username}
+								</p>
+							</div>
 						</div>
 						<div className="flex items-center gap-6">
 							<div className="flex items-center gap-6 text-sm">
