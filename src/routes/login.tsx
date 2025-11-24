@@ -29,7 +29,7 @@ function RouteComponent() {
 		mutationFn: postLogin,
 		onSuccess: () => {
 			setAuthError(null);
-			navigate({ to: "/dashboard" });
+			navigate({ to: "/containers" });
 		},
 		onError: (error: Error) => {
 			setAuthError(error.message || "Authentication failed. Please try again.");
