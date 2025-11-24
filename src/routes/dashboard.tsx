@@ -1,8 +1,14 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useMutation,
+	useSuspenseQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { fetchContainers } from "@/features/containers/api/fetch-containers";
+import { postStartContainer } from "@/features/containers/api/post-start-container";
+import { postStopContainer } from "@/features/containers/api/post-stop-container";
 import type { ContainerInfo } from "@/features/containers/types";
-import { LogOut, Search } from "lucide-react";
+import { LogOut, Search, Play, Square } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -66,8 +72,22 @@ function getStateStyles(state: string) {
 	);
 }
 
-function ContainerCard({ container }: { container: ContainerInfo }) {
+function ContainerCard({
+	container,
+	onStart,
+	onStop,
+	isStarting,
+	isStopping,
+}: {
+	container: ContainerInfo;
+	onStart: (id: string) => void;
+	onStop: (id: string) => void;
+	isStarting: boolean;
+	isStopping: boolean;
+}) {
 	const stateStyles = getStateStyles(container.state);
+	const isRunning = container.state.toLowerCase() === "running";
+	const isExited = container.state.toLowerCase() === "exited";
 
 	return (
 		<div className="group relative bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-5 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-lg hover:shadow-slate-200/50 dark:hover:shadow-slate-950/50 transition-all duration-200">
@@ -96,32 +116,43 @@ function ContainerCard({ container }: { container: ContainerInfo }) {
 				</p>
 			</div>
 
-			{/* Ports */}
-			{container.ports.length > 0 && (
-				<div className="mb-4">
-					<div className="flex flex-wrap gap-1.5">
-						{container.ports.map((port, idx) => (
-							<span
-								key={idx}
-								className="inline-flex items-center px-2 py-0.5 text-xs font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700"
+			{/* Footer with Actions */}
+			<div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+				<div className="flex items-center justify-between">
+					<p className="text-xs font-mono text-slate-400 dark:text-slate-600">
+						{container.id.substring(0, 12)}
+					</p>
+					<div className="flex gap-2">
+						{isExited && (
+							<Button
+								size="sm"
+								variant="ghost"
+								onClick={() => onStart(container.id)}
+								disabled={isStarting}
+								className="h-7 px-2 gap-1.5 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400"
 							>
-								{port.public > 0
-									? `${port.public}:${port.private}`
-									: port.private}
-								<span className="text-slate-400 dark:text-slate-500">
-									/{port.type}
-								</span>
-							</span>
-						))}
+								<Play
+									className={`w-3.5 h-3.5 ${isStarting ? "animate-pulse" : ""}`}
+								/>
+								{isStarting ? "Starting..." : "Start"}
+							</Button>
+						)}
+						{isRunning && (
+							<Button
+								size="sm"
+								variant="ghost"
+								onClick={() => onStop(container.id)}
+								disabled={isStopping}
+								className="h-7 px-2 gap-1.5 text-xs hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
+							>
+								<Square
+									className={`w-3.5 h-3.5 ${isStopping ? "animate-pulse" : ""}`}
+								/>
+								{isStopping ? "Stopping..." : "Stop"}
+							</Button>
+						)}
 					</div>
 				</div>
-			)}
-
-			{/* Footer */}
-			<div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-				<p className="text-xs font-mono text-slate-400 dark:text-slate-600">
-					{container.id.substring(0, 12)}
-				</p>
 			</div>
 		</div>
 	);
@@ -131,7 +162,51 @@ function RouteComponent() {
 	const { queryOptions, auth } = Route.useRouteContext();
 	const query = useSuspenseQuery(queryOptions);
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const [searchQuery, setSearchQuery] = useState("");
+	const [loadingContainers, setLoadingContainers] = useState<
+		Record<string, "start" | "stop">
+	>({});
+
+	const startContainer = useMutation({
+		mutationFn: postStartContainer,
+		onMutate: async ({ id }) => {
+			setLoadingContainers((prev) => ({ ...prev, [id]: "start" }));
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["containers"] });
+		},
+		onError: (error) => {
+			console.error("Failed to start container:", error);
+		},
+		onSettled: (_, __, { id }) => {
+			setLoadingContainers((prev) => {
+				const next = { ...prev };
+				delete next[id];
+				return next;
+			});
+		},
+	});
+
+	const stopContainer = useMutation({
+		mutationFn: postStopContainer,
+		onMutate: async ({ id }) => {
+			setLoadingContainers((prev) => ({ ...prev, [id]: "stop" }));
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["containers"] });
+		},
+		onError: (error) => {
+			console.error("Failed to stop container:", error);
+		},
+		onSettled: (_, __, { id }) => {
+			setLoadingContainers((prev) => {
+				const next = { ...prev };
+				delete next[id];
+				return next;
+			});
+		},
+	});
 
 	const logout = useMutation({
 		mutationFn: postLogout,
@@ -232,7 +307,14 @@ function RouteComponent() {
 				{filteredContainers.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{filteredContainers.map((container) => (
-							<ContainerCard key={container.id} container={container} />
+							<ContainerCard
+								key={container.id}
+								container={container}
+								onStart={(id) => startContainer.mutate({ id })}
+								onStop={(id) => stopContainer.mutate({ id })}
+								isStarting={loadingContainers[container.id] === "start"}
+								isStopping={loadingContainers[container.id] === "stop"}
+							/>
 						))}
 					</div>
 				) : (
