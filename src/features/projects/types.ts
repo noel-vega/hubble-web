@@ -37,9 +37,14 @@ export const ProjectComposeService = z.object({
   networks: z.string().array(),
   restart: z.string(),
   command: z.string(),
+  status: z.literal("running").or(z.literal("stopped")).or(z.literal("not_created"))
 })
 
 export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
 export type ProjectContainerInfo = z.infer<typeof ProjectContainerInfoSchema>;
 export type ProjectVolumeInfo = z.infer<typeof ProjectVolumeInfoSchema>;
 export type ProjectEnvInfo = z.infer<typeof ProjectEnvInfoSchema>;
+
+export const ServiceIdentifier = z.object({ projectName: z.string(), serviceName: z.string() })
+
+export type ServiceIdentifier = z.infer<typeof ServiceIdentifier>

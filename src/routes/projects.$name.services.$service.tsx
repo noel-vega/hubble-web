@@ -98,17 +98,41 @@ function RouteComponent() {
 
 			{/* Service Header */}
 			<div className="mb-8">
-				<div className="flex items-center gap-3 mb-2">
-					<div className="p-2.5 rounded-lg bg-purple-500/10">
-						<Layers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+				<div className="flex items-center justify-between mb-2">
+					<div className="flex items-center gap-3">
+						<div className="p-2.5 rounded-lg bg-purple-500/10">
+							<Layers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+						</div>
+						<div>
+							<h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+								{service.name}
+							</h1>
+							<p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+								Docker Compose service configuration
+							</p>
+						</div>
 					</div>
-					<h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-						{service.name}
-					</h1>
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="default"
+							onClick={() => console.log(`Starting service: ${service.name}`)}
+							className="gap-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 border-slate-300 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-green-950/20"
+						>
+							<PlayCircle className="w-4 h-4" />
+							<span>Start</span>
+						</Button>
+						<Button
+							variant="outline"
+							size="default"
+							onClick={() => console.log(`Stopping service: ${service.name}`)}
+							className="gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border-slate-300 dark:border-slate-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+						>
+							<X className="w-4 h-4" />
+							<span>Stop</span>
+						</Button>
+					</div>
 				</div>
-				<p className="text-sm text-slate-500 dark:text-slate-400">
-					Docker Compose service configuration
-				</p>
 			</div>
 
 			{/* Content Grid */}

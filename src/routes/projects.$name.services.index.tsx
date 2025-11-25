@@ -45,11 +45,39 @@ function RouteComponent() {
 						params={{ name, service: service.name }}
 						className="block p-5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 shadow-sm hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
 					>
-						<div className="flex items-center gap-2 mb-4">
-							<span className="w-2 h-2 rounded-full bg-purple-500" />
-							<h3 className="text-base font-semibold text-slate-900 dark:text-white">
-								{service.name}
-							</h3>
+						<div className="flex items-center justify-between mb-4">
+							<div className="flex items-center gap-2">
+								<span className="w-2 h-2 rounded-full bg-purple-500" />
+								<h3 className="text-base font-semibold text-slate-900 dark:text-white">
+									{service.name}
+								</h3>
+							</div>
+							<div className="flex items-center gap-1.5">
+								<span
+									className={`w-2 h-2 rounded-full ${
+										service.status === "running"
+											? "bg-green-500"
+											: service.status === "stopped"
+												? "bg-red-500"
+												: "bg-slate-400"
+									}`}
+								/>
+								<span
+									className={`text-xs font-medium ${
+										service.status === "running"
+											? "text-green-600 dark:text-green-400"
+											: service.status === "stopped"
+												? "text-red-600 dark:text-red-400"
+												: "text-slate-600 dark:text-slate-400"
+									}`}
+								>
+									{service.status === "running"
+										? "Running"
+										: service.status === "stopped"
+											? "Stopped"
+											: "Not Created"}
+								</span>
+							</div>
 						</div>
 
 						<div className="space-y-3 text-sm">
