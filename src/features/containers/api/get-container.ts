@@ -1,6 +1,5 @@
-
-import { z } from 'zod'
-import { ContainerInfoSchema, PortInfoSchema } from '../types'
+import { z } from "zod";
+import { PortInfoSchema } from "../types";
 
 const ContainerStateInfoSchema = z.object({
   status: z.string(),
@@ -14,15 +13,15 @@ const ContainerStateInfoSchema = z.object({
   error: z.string(),
   started_at: z.string(),
   finished_at: z.string(),
-})
+});
 
 const ContainerMountInfoSchema = z.object({
   type: z.string(),
   source: z.string(),
   destination: z.string(),
   mode: z.string(),
-  rw: z.boolean()
-})
+  rw: z.boolean(),
+});
 
 const ContainerNetworkInfoSchema = z.object({
   network_id: z.string(),
@@ -34,15 +33,14 @@ const ContainerNetworkInfoSchema = z.object({
   global_ipv6_address: z.string(),
   global_ipv6_prefix_len: z.number(),
   mac_address: z.string(),
-})
+});
 
 const ContainerPortBindingInfoSchema = z.object({
   host_ip: z.string(),
-  host_port: z.string()
-})
+  host_port: z.string(),
+});
 
 const ContainerHostConfigInfoSchema = z.object({
-
   cpu_shares: z.number(),
   memory: z.number(),
   memory_reservation: z.number(),
@@ -50,8 +48,8 @@ const ContainerHostConfigInfoSchema = z.object({
   nano_cpus: z.number(),
   auto_remove: z.boolean(),
   network_mode: z.string(),
-  port_bindings: z.record(z.string(), ContainerPortBindingInfoSchema),
-})
+  port_bindings: z.record(z.string(), ContainerPortBindingInfoSchema.array()),
+});
 
 export const DetailedContainerInfoSchema = z.object({
   id: z.string(),
@@ -63,16 +61,18 @@ export const DetailedContainerInfoSchema = z.object({
   labels: z.record(z.string(), z.string()),
   mounts: ContainerMountInfoSchema.array(),
   networks: z.record(z.string(), ContainerNetworkInfoSchema),
-  env: z.string(),
+  env: z.string().array(),
   restart_policy: z.string(),
   restart_count: z.number(),
   platform: z.string(),
-  host_config: ContainerHostConfigInfoSchema
-})
+  host_config: ContainerHostConfigInfoSchema,
+});
+
+export type DetailedContainerInfo = z.infer<typeof DetailedContainerInfoSchema>;
 
 export async function getContainer({ id }: { id: string }) {
-  const response = await fetch(`/api/containers/${id}`)
-  const data = await response.json()
-  console.log("containers", data)
-  return DetailedContainerInfoSchema.parse(data)
+  const response = await fetch(`/api/containers/${id}`);
+  const data = await response.json();
+  console.log("containers", data);
+  return DetailedContainerInfoSchema.parse(data);
 }

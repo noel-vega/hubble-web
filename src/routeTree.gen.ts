@@ -13,8 +13,10 @@ import { Route as RegistryRouteImport } from './routes/registry'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ContainersRouteImport } from './routes/containers'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContainersIndexRouteImport } from './routes/containers.index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo/table'
+import { Route as ContainersIdRouteImport } from './routes/containers.$id'
 
 const RegistryRoute = RegistryRouteImport.update({
   id: '/registry',
@@ -36,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContainersIndexRoute = ContainersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ContainersRoute,
+} as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
@@ -46,31 +53,41 @@ const DemoTableRoute = DemoTableRouteImport.update({
   path: '/demo/table',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContainersIdRoute = ContainersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ContainersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/containers': typeof ContainersRoute
+  '/containers': typeof ContainersRouteWithChildren
   '/login': typeof LoginRoute
   '/registry': typeof RegistryRoute
+  '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/containers/': typeof ContainersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/containers': typeof ContainersRoute
   '/login': typeof LoginRoute
   '/registry': typeof RegistryRoute
+  '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/containers': typeof ContainersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/containers': typeof ContainersRoute
+  '/containers': typeof ContainersRouteWithChildren
   '/login': typeof LoginRoute
   '/registry': typeof RegistryRoute
+  '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/containers/': typeof ContainersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -79,29 +96,34 @@ export interface FileRouteTypes {
     | '/containers'
     | '/login'
     | '/registry'
+    | '/containers/$id'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/containers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/containers'
     | '/login'
     | '/registry'
+    | '/containers/$id'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/containers'
   id:
     | '__root__'
     | '/'
     | '/containers'
     | '/login'
     | '/registry'
+    | '/containers/$id'
     | '/demo/table'
     | '/demo/tanstack-query'
+    | '/containers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ContainersRoute: typeof ContainersRoute
+  ContainersRoute: typeof ContainersRouteWithChildren
   LoginRoute: typeof LoginRoute
   RegistryRoute: typeof RegistryRoute
   DemoTableRoute: typeof DemoTableRoute
@@ -138,6 +160,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/containers/': {
+      id: '/containers/'
+      path: '/'
+      fullPath: '/containers/'
+      preLoaderRoute: typeof ContainersIndexRouteImport
+      parentRoute: typeof ContainersRoute
+    }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
       path: '/demo/tanstack-query'
@@ -152,12 +181,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoTableRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/containers/$id': {
+      id: '/containers/$id'
+      path: '/$id'
+      fullPath: '/containers/$id'
+      preLoaderRoute: typeof ContainersIdRouteImport
+      parentRoute: typeof ContainersRoute
+    }
   }
 }
 
+interface ContainersRouteChildren {
+  ContainersIdRoute: typeof ContainersIdRoute
+  ContainersIndexRoute: typeof ContainersIndexRoute
+}
+
+const ContainersRouteChildren: ContainersRouteChildren = {
+  ContainersIdRoute: ContainersIdRoute,
+  ContainersIndexRoute: ContainersIndexRoute,
+}
+
+const ContainersRouteWithChildren = ContainersRoute._addFileChildren(
+  ContainersRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ContainersRoute: ContainersRoute,
+  ContainersRoute: ContainersRouteWithChildren,
   LoginRoute: LoginRoute,
   RegistryRoute: RegistryRoute,
   DemoTableRoute: DemoTableRoute,
