@@ -1,6 +1,12 @@
 import { createFileRoute, Link, getRouteApi } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useSuspenseQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import type { ProjectComposeService } from "@/features/projects/types";
+import { postServiceStart } from "@/features/projects/api/post-service-start";
+import { postServiceStop } from "@/features/projects/api/post-service-stop";
 import {
 	ArrowLeft,
 	Package,
@@ -15,6 +21,7 @@ import {
 	X,
 	Plus,
 	Trash2,
+	Loader2,
 } from "lucide-react";
 import z from "zod";
 import { useState } from "react";
@@ -43,6 +50,7 @@ function RouteComponent() {
 	const { name, service: serviceName } = Route.useParams();
 	const { queryOptions } = parentRoute.useLoaderData();
 	const { data } = useSuspenseQuery(queryOptions);
+	const queryClient = useQueryClient();
 
 	const services = (
 		data as { services: z.infer<typeof ProjectComposeService>[] }
@@ -52,6 +60,20 @@ function RouteComponent() {
 
 	const [editingSection, setEditingSection] = useState<EditingSection>(null);
 	const [editData, setEditData] = useState<any>({});
+
+	const startService = useMutation({
+		mutationFn: postServiceStart,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+		},
+	});
+
+	const stopService = useMutation({
+		mutationFn: postServiceStop,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+		},
+	});
 
 	if (!service) {
 		return (
@@ -113,24 +135,48 @@ function RouteComponent() {
 						</div>
 					</div>
 					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							size="default"
-							onClick={() => console.log(`Starting service: ${service.name}`)}
-							className="gap-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 border-slate-300 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-green-950/20"
-						>
-							<PlayCircle className="w-4 h-4" />
-							<span>Start</span>
-						</Button>
-						<Button
-							variant="outline"
-							size="default"
-							onClick={() => console.log(`Stopping service: ${service.name}`)}
-							className="gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border-slate-300 dark:border-slate-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-						>
-							<X className="w-4 h-4" />
-							<span>Stop</span>
-						</Button>
+						{service.status !== "running" && (
+							<Button
+								variant="outline"
+								size="default"
+								onClick={() =>
+									startService.mutate({
+										projectName: name,
+										serviceName: service.name,
+									})
+								}
+								disabled={startService.isPending}
+								className="gap-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 border-slate-300 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-green-950/20"
+							>
+								{startService.isPending ? (
+									<Loader2 className="w-4 h-4 animate-spin" />
+								) : (
+									<PlayCircle className="w-4 h-4" />
+								)}
+								<span>{startService.isPending ? "Starting..." : "Start"}</span>
+							</Button>
+						)}
+						{service.status === "running" && (
+							<Button
+								variant="outline"
+								size="default"
+								onClick={() =>
+									stopService.mutate({
+										projectName: name,
+										serviceName: service.name,
+									})
+								}
+								disabled={stopService.isPending}
+								className="gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border-slate-300 dark:border-slate-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+							>
+								{stopService.isPending ? (
+									<Loader2 className="w-4 h-4 animate-spin" />
+								) : (
+									<X className="w-4 h-4" />
+								)}
+								<span>{stopService.isPending ? "Stopping..." : "Stop"}</span>
+							</Button>
+						)}
 					</div>
 				</div>
 			</div>

@@ -1,17 +1,25 @@
 import { createFileRoute, Link, getRouteApi } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useSuspenseQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import type { ProjectComposeService } from "@/features/projects/types";
+import { postServiceStart } from "@/features/projects/api/post-service-start";
+import { postServiceStop } from "@/features/projects/api/post-service-stop";
 
 const parentRoute = getRouteApi("/projects/$name/services");
 import {
 	Layers,
-	Package,
-	Network,
-	HardDrive,
-	Settings,
-	PlayCircle,
+	Play,
+	Square,
+	MoreVertical,
+	Box,
+	Plus,
+	Loader2,
 } from "lucide-react";
 import z from "zod";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/projects/$name/services/")({
 	component: RouteComponent,
@@ -21,242 +29,206 @@ function RouteComponent() {
 	const { name } = Route.useParams();
 	const { queryOptions } = parentRoute.useLoaderData();
 	const { data } = useSuspenseQuery(queryOptions);
+	const queryClient = useQueryClient();
 
 	const services = (
 		data as { services: z.infer<typeof ProjectComposeService>[] }
 	).services;
 
+	const startService = useMutation({
+		mutationFn: postServiceStart,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+		},
+	});
+
+	const stopService = useMutation({
+		mutationFn: postServiceStop,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+		},
+	});
+
 	return (
-		<div>
-			<div className="flex items-center gap-2 mb-6">
-				<div className="p-2 rounded-lg bg-purple-500/10">
-					<Layers className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+		<div className="px-6 py-8">
+			{/* Header */}
+			<div className="mb-8 flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
+						Services
+					</h1>
+					<p className="text-sm text-slate-500 dark:text-slate-400">
+						Manage your Docker Compose services
+					</p>
 				</div>
-				<h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-					Services
-				</h2>
+				<Button
+					onClick={() => console.log("Add service clicked")}
+					className="gap-2"
+				>
+					<Plus className="w-4 h-4" />
+					Add Service
+				</Button>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-				{services.map((service) => (
-					<Link
-						key={service.name}
-						to="/projects/$name/services/$service"
-						params={{ name, service: service.name }}
-						className="block p-5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 shadow-sm hover:border-purple-300 dark:hover:border-purple-600 transition-colors"
-					>
-						<div className="flex items-center justify-between mb-4">
-							<div className="flex items-center gap-2">
-								<span className="w-2 h-2 rounded-full bg-purple-500" />
-								<h3 className="text-base font-semibold text-slate-900 dark:text-white">
-									{service.name}
-								</h3>
-							</div>
-							<div className="flex items-center gap-1.5">
-								<span
-									className={`w-2 h-2 rounded-full ${
-										service.status === "running"
-											? "bg-green-500"
-											: service.status === "stopped"
-												? "bg-red-500"
-												: "bg-slate-400"
-									}`}
-								/>
-								<span
-									className={`text-xs font-medium ${
-										service.status === "running"
-											? "text-green-600 dark:text-green-400"
-											: service.status === "stopped"
-												? "text-red-600 dark:text-red-400"
-												: "text-slate-600 dark:text-slate-400"
-									}`}
+			{/* Services Table */}
+			{services.length > 0 ? (
+				<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+					<div className="divide-y divide-slate-200 dark:divide-slate-800">
+						{services.map((service) => (
+							<div
+								key={service.name}
+								className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+							>
+								{/* Service Icon & Name */}
+
+								<Link
+									to="/projects/$name/services/$service"
+									params={{ name, service: service.name }}
+									className="text-sm font-semibold flex-1 text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
 								>
-									{service.status === "running"
-										? "Running"
-										: service.status === "stopped"
-											? "Stopped"
-											: "Not Created"}
-								</span>
-							</div>
-						</div>
-
-						<div className="space-y-3 text-sm">
-							{/* Image */}
-							{service.image && (
-								<div className="flex items-start gap-3">
-									<Package className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Image
-										</p>
-										<p className="font-mono text-xs text-slate-900 dark:text-white break-all">
-											{service.image}
-										</p>
-									</div>
-								</div>
-							)}
-
-							{/* Build */}
-							{service.build && (
-								<div className="flex items-start gap-3">
-									<Package className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Build
-										</p>
-										<p className="font-mono text-xs text-slate-900 dark:text-white break-all">
-											{service.build}
-										</p>
-									</div>
-								</div>
-							)}
-
-							{/* Ports */}
-							{service.ports && service.ports.length > 0 && (
-								<div className="flex items-start gap-3">
-									<Network className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Ports
-										</p>
-										<div className="flex flex-wrap gap-1">
-											{service.ports.map((port, idx) => (
-												<span
-													key={idx}
-													className="inline-block px-2 py-0.5 bg-blue-500/10 text-blue-700 dark:text-blue-400 rounded text-xs font-mono"
-												>
-													{port}
-												</span>
-											))}
+									<div className="flex items-center gap-3 flex-1 min-w-0">
+										<div className="flex-shrink-0">
+											<div className="w-10 h-10 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+												<Box className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+											</div>
 										</div>
-									</div>
-								</div>
-							)}
-
-							{/* Volumes */}
-							{service.volumes && service.volumes.length > 0 && (
-								<div className="flex items-start gap-3">
-									<HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Volumes ({service.volumes.length})
-										</p>
-										<div className="space-y-1">
-											{service.volumes.map((volume, idx) => (
-												<p
-													key={idx}
-													className="font-mono text-xs text-slate-900 dark:text-white break-all"
-												>
-													{volume}
-												</p>
-											))}
-										</div>
-									</div>
-								</div>
-							)}
-
-							{/* Environment Variables */}
-							{service.environment &&
-								Object.keys(service.environment).length > 0 && (
-									<div className="flex items-start gap-3">
-										<Settings className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
 										<div className="flex-1 min-w-0">
-											<p className="text-xs text-slate-500 dark:text-slate-400">
-												Environment Variables (
-												{Object.keys(service.environment).length})
-											</p>
+											{service.name}
+											<div className="flex items-center gap-2 mt-0.5">
+												{service.image && (
+													<p className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">
+														{service.image}
+													</p>
+												)}
+											</div>
 										</div>
 									</div>
-								)}
-
-							{/* Networks */}
-							{service.networks && service.networks.length > 0 && (
-								<div className="flex items-start gap-3">
-									<Network className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Networks
-										</p>
-										<div className="flex flex-wrap gap-1">
-											{service.networks.map((network, idx) => (
-												<span
-													key={idx}
-													className="inline-block px-2 py-0.5 bg-purple-500/10 text-purple-700 dark:text-purple-400 rounded text-xs font-mono"
-												>
-													{network}
-												</span>
-											))}
-										</div>
-									</div>
+								</Link>
+								{/* Ports */}
+								<div className="hidden md:flex items-center gap-1 flex-shrink-0">
+									{service.ports && service.ports.length > 0 ? (
+										service.ports.slice(0, 2).map((port, idx) => (
+											<span
+												key={idx}
+												className="inline-block px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded text-xs font-mono"
+											>
+												{port}
+											</span>
+										))
+									) : (
+										<span className="text-xs text-slate-400">No ports</span>
+									)}
+									{service.ports && service.ports.length > 2 && (
+										<span className="text-xs text-slate-400">
+											+{service.ports.length - 2}
+										</span>
+									)}
 								</div>
-							)}
 
-							{/* Depends On */}
-							{service.depends_on && service.depends_on.length > 0 && (
-								<div className="flex items-start gap-3">
-									<Layers className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Depends On
-										</p>
-										<div className="flex flex-wrap gap-1">
-											{service.depends_on.map((dep, idx) => (
-												<span
-													key={idx}
-													className="inline-block px-2 py-0.5 bg-slate-500/10 text-slate-700 dark:text-slate-400 rounded text-xs font-mono"
-												>
-													{dep}
-												</span>
-											))}
-										</div>
-									</div>
+								{/* Status */}
+								<div className="flex items-center gap-1.5 flex-shrink-0 min-w-[100px]">
+									<span
+										className={`w-2 h-2 rounded-full flex-shrink-0 ${
+											service.status === "running"
+												? "bg-green-500"
+												: service.status === "stopped"
+													? "bg-red-500"
+													: "bg-slate-400"
+										}`}
+									/>
+									<span
+										className={`text-xs font-medium ${
+											service.status === "running"
+												? "text-green-600 dark:text-green-400"
+												: service.status === "stopped"
+													? "text-red-600 dark:text-red-400"
+													: "text-slate-600 dark:text-slate-400"
+										}`}
+									>
+										{service.status === "running"
+											? "Running"
+											: service.status === "stopped"
+												? "Stopped"
+												: "Not Created"}
+									</span>
 								</div>
-							)}
 
-							{/* Restart Policy */}
-							{service.restart && (
-								<div className="flex items-start gap-3">
-									<PlayCircle className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Restart Policy
-										</p>
-										<p className="font-mono text-xs text-slate-900 dark:text-white">
-											{service.restart}
-										</p>
-									</div>
+								{/* Actions */}
+								<div className="flex items-center gap-1 flex-shrink-0">
+									{service.status !== "running" && (
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={(e) => {
+												e.stopPropagation();
+												startService.mutate({
+													projectName: name,
+													serviceName: service.name,
+												});
+											}}
+											disabled={
+												startService.isPending &&
+												startService.variables?.serviceName === service.name
+											}
+											className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+											title="Start service"
+										>
+											{startService.isPending &&
+											startService.variables?.serviceName === service.name ? (
+												<Loader2 className="w-4 h-4 animate-spin" />
+											) : (
+												<Play className="w-4 h-4" />
+											)}
+										</Button>
+									)}
+									{service.status === "running" && (
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={(e) => {
+												e.stopPropagation();
+												stopService.mutate({
+													projectName: name,
+													serviceName: service.name,
+												});
+											}}
+											disabled={
+												stopService.isPending &&
+												stopService.variables?.serviceName === service.name
+											}
+											className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+											title="Stop service"
+										>
+											{stopService.isPending &&
+											stopService.variables?.serviceName === service.name ? (
+												<Loader2 className="w-4 h-4 animate-spin" />
+											) : (
+												<Square className="w-4 h-4" />
+											)}
+										</Button>
+									)}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+									>
+										<MoreVertical className="w-4 h-4" />
+									</Button>
 								</div>
-							)}
-
-							{/* Command */}
-							{service.command && (
-								<div className="flex items-start gap-3">
-									<PlayCircle className="w-4 h-4 text-slate-500 dark:text-slate-400 mt-0.5 flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-											Command
-										</p>
-										<p className="font-mono text-xs text-slate-900 dark:text-white break-all">
-											{service.command}
-										</p>
-									</div>
-								</div>
-							)}
-						</div>
-					</Link>
-				))}
-
-				{services.length === 0 && (
-					<div className="col-span-full text-center py-12">
-						<div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
-							<Layers className="w-8 h-8 text-slate-400" />
-						</div>
-						<p className="text-sm text-slate-500 dark:text-slate-400">
-							No services found
-						</p>
+							</div>
+						))}
 					</div>
-				)}
-			</div>
+				</div>
+			) : (
+				<div className="text-center py-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
+					<div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+						<Layers className="w-8 h-8 text-slate-400" />
+					</div>
+					<p className="text-sm text-slate-500 dark:text-slate-400">
+						No services found
+					</p>
+				</div>
+			)}
 		</div>
 	);
 }
