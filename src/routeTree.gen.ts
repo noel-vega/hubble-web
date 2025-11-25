@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistryRouteImport } from './routes/registry'
+import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ContainersRouteImport } from './routes/containers'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,11 @@ import { Route as ContainersIdRouteImport } from './routes/containers.$id'
 const RegistryRoute = RegistryRouteImport.update({
   id: '/registry',
   path: '/registry',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectsRoute = ProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/containers': typeof ContainersRouteWithChildren
   '/login': typeof LoginRoute
+  '/projects': typeof ProjectsRoute
   '/registry': typeof RegistryRoute
   '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/projects': typeof ProjectsRoute
   '/registry': typeof RegistryRoute
   '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/containers': typeof ContainersRouteWithChildren
   '/login': typeof LoginRoute
+  '/projects': typeof ProjectsRoute
   '/registry': typeof RegistryRoute
   '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/'
     | '/containers'
     | '/login'
+    | '/projects'
     | '/registry'
     | '/containers/$id'
     | '/demo/table'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/projects'
     | '/registry'
     | '/containers/$id'
     | '/demo/table'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/'
     | '/containers'
     | '/login'
+    | '/projects'
     | '/registry'
     | '/containers/$id'
     | '/demo/table'
@@ -125,6 +137,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContainersRoute: typeof ContainersRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ProjectsRoute: typeof ProjectsRoute
   RegistryRoute: typeof RegistryRoute
   DemoTableRoute: typeof DemoTableRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
@@ -137,6 +150,13 @@ declare module '@tanstack/react-router' {
       path: '/registry'
       fullPath: '/registry'
       preLoaderRoute: typeof RegistryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projects': {
+      id: '/projects'
+      path: '/projects'
+      fullPath: '/projects'
+      preLoaderRoute: typeof ProjectsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -209,6 +229,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContainersRoute: ContainersRouteWithChildren,
   LoginRoute: LoginRoute,
+  ProjectsRoute: ProjectsRoute,
   RegistryRoute: RegistryRoute,
   DemoTableRoute: DemoTableRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
