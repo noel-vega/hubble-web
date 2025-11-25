@@ -28,18 +28,16 @@ import { useState } from "react";
 
 export const Route = createFileRoute("/containers/$id")({
 	beforeLoad: async ({ context }) => {
-		try {
-			const auth = await context.queryClient.ensureQueryData({
-				queryKey: ["auth", "me"],
-				queryFn: fetchMe,
-			});
-			if (!auth.authenticated) {
-				throw redirect({ to: "/login" });
-			}
-			return { auth };
-		} catch {
+		const auth = await context.queryClient.ensureQueryData({
+			queryKey: ["auth", "me"],
+			queryFn: fetchMe,
+		});
+
+		if (!auth.authenticated) {
 			throw redirect({ to: "/login" });
 		}
+
+		return { auth };
 	},
 	loader: async ({ context, params }) => {
 		const queryOptions = {

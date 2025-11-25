@@ -16,24 +16,21 @@ import { fetchMe } from "@/features/auth/api/fetchMe";
 
 export const Route = createFileRoute("/containers/")({
 	beforeLoad: async ({ context }) => {
-		try {
-			const auth = await context.queryClient.ensureQueryData({
-				queryKey: ["auth", "me"],
-				queryFn: fetchMe,
-			})
-			if (!auth.authenticated) {
-				throw redirect({ to: "/login" });
-			}
+		const auth = await context.queryClient.ensureQueryData({
+			queryKey: ["auth", "me"],
+			queryFn: fetchMe,
+		});
 
-			const queryOptions = {
-				queryKey: ["containers"],
-				queryFn: fetchContainers,
-			}
-			await context.queryClient.ensureQueryData(queryOptions);
-			return { auth, queryOptions };
-		} catch {
+		if (!auth.authenticated) {
 			throw redirect({ to: "/login" });
 		}
+
+		const queryOptions = {
+			queryKey: ["containers"],
+			queryFn: fetchContainers,
+		};
+		await context.queryClient.ensureQueryData(queryOptions);
+		return { auth, queryOptions };
 	},
 	component: RouteComponent,
 });
@@ -60,14 +57,14 @@ function getStateStyles(state: string) {
 			text: "text-blue-700 dark:text-blue-400",
 			bg: "bg-blue-500/10 border-blue-500/20",
 		},
-	}
+	};
 	return (
 		stateMap[state.toLowerCase()] || {
 			dot: "bg-slate-400",
 			text: "text-slate-600 dark:text-slate-400",
 			bg: "bg-slate-500/10 border-slate-500/20",
 		}
-	)
+	);
 }
 
 function ContainerCard({
@@ -135,8 +132,8 @@ function ContainerCard({
 							size="sm"
 							variant="ghost"
 							onClick={(e) => {
-								e.preventDefault()
-								onStart(container.id)
+								e.preventDefault();
+								onStart(container.id);
 							}}
 							disabled={isStarting}
 							className="h-7 px-2 gap-1.5 text-xs hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400"
@@ -152,8 +149,8 @@ function ContainerCard({
 							size="sm"
 							variant="ghost"
 							onClick={(e) => {
-								e.preventDefault()
-								onStop(container.id)
+								e.preventDefault();
+								onStop(container.id);
 							}}
 							disabled={isStopping}
 							className="h-7 px-2 gap-1.5 text-xs hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
@@ -167,7 +164,7 @@ function ContainerCard({
 				</div>
 			</div>
 		</div>
-	)
+	);
 }
 
 function RouteComponent() {
@@ -194,10 +191,10 @@ function RouteComponent() {
 			setLoadingContainers((prev) => {
 				const next = { ...prev };
 				delete next[id];
-				return next
-			})
+				return next;
+			});
 		},
-	})
+	});
 
 	const stopContainer = useMutation({
 		mutationFn: postStopContainer,
@@ -214,10 +211,10 @@ function RouteComponent() {
 			setLoadingContainers((prev) => {
 				const next = { ...prev };
 				delete next[id];
-				return next
-			})
+				return next;
+			});
 		},
-	})
+	});
 
 	const filteredContainers = useMemo(() => {
 		if (!searchQuery.trim()) {
@@ -225,7 +222,7 @@ function RouteComponent() {
 		}
 		return query.data.containers.filter((container) =>
 			container.name.toLowerCase().includes(searchQuery.toLowerCase()),
-		)
+		);
 	}, [query.data.containers, searchQuery]);
 
 	const stats = useMemo(() => {
@@ -237,7 +234,7 @@ function RouteComponent() {
 				(c) => c.state.toLowerCase() === "exited",
 			).length,
 			total: filteredContainers.length,
-		}
+		};
 	}, [filteredContainers]);
 
 	return (
@@ -300,5 +297,5 @@ function RouteComponent() {
 				)}
 			</div>
 		</div>
-	)
+	);
 }

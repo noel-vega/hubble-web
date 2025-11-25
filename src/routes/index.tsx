@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
 			});
 
 			if (auth.authenticated) {
-				throw redirect({ to: "/containers" });
+				throw redirect({ to: "/projects" });
 			} else {
 				throw redirect({ to: "/login" });
 			}

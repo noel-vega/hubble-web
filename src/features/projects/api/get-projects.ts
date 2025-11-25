@@ -1,25 +1,25 @@
+import z from "zod";
 
-// type ProjectInfo struct {
-// 	Name            string `json:"name"`
-// 	Path            string `json:"path"`
-// 	ComposeFilePath string `json:"compose_file_path"`
-// 	ComposeContent  string `json:"compose_content"`
-// }
-//
+export const ProjectInfoSchema = z.object({
+	name: z.string(),
+	path: z.string(),
+	service_count: z.number(),
+	containers_running: z.number(),
+	containers_stopped: z.number(),
+});
 
-import z from "zod"
+const ResponseSchema = z.object({
+	count: z.number(),
+	projects: ProjectInfoSchema.array(),
+});
 
-const ProjectInfoSchema = z.object({
-  name: z.string(),
-  path: z.string(),
-  composeFilePath: z.string(),
-  composeContent: z.string()
-})
+export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
 
+export type ProjectsResponse = z.infer<typeof ResponseSchema>;
 
 export async function getProjects() {
-  const response = await fetch("/api/projects")
-  const data = await response.json()
-  console.log(data)
-  return ProjectInfoSchema.array().parse(data)
+	const response = await fetch("/api/projects");
+	const data = await response.json();
+	console.log(data);
+	return ResponseSchema.parse(data);
 }
