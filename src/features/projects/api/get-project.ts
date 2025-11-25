@@ -1,4 +1,5 @@
 import z from "zod";
+import { ProjectInfoSchema } from "../types";
 
 const ProjectServiceDetailSchema = z.object({
   image: z.string(),
@@ -15,6 +16,17 @@ const ProjectContainerInfoSchema = z.object({
   status: z.string(),
 });
 
+
+// type ProjectInfo struct {
+// 	Name              string `json:"name"`
+// 	Path              string `json:"path"`
+// 	ServiceCount      int    `json:"service_count"`
+// 	ContainersRunning int    `json:"containers_running"`
+// 	ContainersStopped int    `json:"containers_stopped"`
+// }
+//
+
+
 export const ProjectDetailSchema = z.object({
   name: z.string(),
   path: z.string(),
@@ -27,9 +39,10 @@ export type ProjectDetail = z.infer<typeof ProjectDetailSchema>;
 export type ProjectServiceDetail = z.infer<typeof ProjectServiceDetailSchema>;
 export type ProjectContainerInfo = z.infer<typeof ProjectContainerInfoSchema>;
 
+
 export async function getProject({ name }: { name: string }) {
   const response = await fetch(`/api/projects/${name}`);
   const data = await response.json();
   console.log(data);
-  return ProjectDetailSchema.parse(data);
+  return ProjectInfoSchema.parse(data);
 }

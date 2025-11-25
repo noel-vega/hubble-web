@@ -16,21 +16,26 @@ import { fetchMe } from "@/features/auth/api/fetchMe";
 
 export const Route = createFileRoute("/containers/")({
 	beforeLoad: async ({ context }) => {
-		const auth = await context.queryClient.ensureQueryData({
-			queryKey: ["auth", "me"],
-			queryFn: fetchMe,
-		});
+		try {
+			const auth = await context.queryClient.ensureQueryData({
+				queryKey: ["auth", "me"],
+				queryFn: fetchMe,
+			});
 
-		if (!auth.authenticated) {
+			if (!auth.authenticated) {
+				throw redirect({ to: "/login" });
+			}
+
+			const queryOptions = {
+				queryKey: ["containers"],
+				queryFn: fetchContainers,
+			};
+			await context.queryClient.ensureQueryData(queryOptions);
+			return { auth, queryOptions };
+		} catch (error) {
+			// If auth check fails or any error occurs, redirect to login
 			throw redirect({ to: "/login" });
 		}
-
-		const queryOptions = {
-			queryKey: ["containers"],
-			queryFn: fetchContainers,
-		};
-		await context.queryClient.ensureQueryData(queryOptions);
-		return { auth, queryOptions };
 	},
 	component: RouteComponent,
 });

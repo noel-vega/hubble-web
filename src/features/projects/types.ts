@@ -1,0 +1,45 @@
+import z from "zod";
+
+export const ProjectInfoSchema = z.object({
+  name: z.string(),
+  path: z.string(),
+  service_count: z.number(),
+  containers_running: z.number(),
+  containers_stopped: z.number(),
+});
+
+export const ProjectContainerInfoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  service: z.string(),
+  state: z.string(),
+  status: z.string(),
+});
+
+export const ProjectVolumeInfoSchema = z.object({
+  service: z.string(),
+  volume: z.string(),
+});
+
+export const ProjectEnvInfoSchema = z.object({
+  service: z.string(),
+  env: z.record(z.string(), z.string()),
+});
+
+export const ProjectComposeService = z.object({
+  name: z.string(),
+  image: z.string(),
+  build: z.string(),
+  ports: z.string().array(),
+  environment: z.record(z.string(), z.string()),
+  volumes: z.string().array(),
+  depends_on: z.string().array(),
+  networks: z.string().array(),
+  restart: z.string(),
+  command: z.string(),
+})
+
+export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
+export type ProjectContainerInfo = z.infer<typeof ProjectContainerInfoSchema>;
+export type ProjectVolumeInfo = z.infer<typeof ProjectVolumeInfoSchema>;
+export type ProjectEnvInfo = z.infer<typeof ProjectEnvInfoSchema>;

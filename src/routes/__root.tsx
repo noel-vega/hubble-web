@@ -53,7 +53,7 @@ function RootComponent() {
 	return (
 		<>
 			<Header username={auth?.username} />
-			<main className="flex-1 w-full">
+			<main className="flex-1 w-full bg-slate-50 dark:bg-[#0d1117]">
 				<Outlet />
 			</main>
 			<TanStackDevtools

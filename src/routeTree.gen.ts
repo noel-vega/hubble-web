@@ -20,6 +20,13 @@ import { Route as ProjectsNameRouteImport } from './routes/projects.$name'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo/table'
 import { Route as ContainersIdRouteImport } from './routes/containers.$id'
+import { Route as ProjectsNameIndexRouteImport } from './routes/projects.$name.index'
+import { Route as ProjectsNameVolumesRouteImport } from './routes/projects.$name.volumes'
+import { Route as ProjectsNameServicesRouteImport } from './routes/projects.$name.services'
+import { Route as ProjectsNameEnvRouteImport } from './routes/projects.$name.env'
+import { Route as ProjectsNameContainersRouteImport } from './routes/projects.$name.containers'
+import { Route as ProjectsNameServicesIndexRouteImport } from './routes/projects.$name.services.index'
+import { Route as ProjectsNameServicesServiceRouteImport } from './routes/projects.$name.services.$service'
 
 const RegistryRoute = RegistryRouteImport.update({
   id: '/registry',
@@ -76,6 +83,43 @@ const ContainersIdRoute = ContainersIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ContainersRoute,
 } as any)
+const ProjectsNameIndexRoute = ProjectsNameIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProjectsNameRoute,
+} as any)
+const ProjectsNameVolumesRoute = ProjectsNameVolumesRouteImport.update({
+  id: '/volumes',
+  path: '/volumes',
+  getParentRoute: () => ProjectsNameRoute,
+} as any)
+const ProjectsNameServicesRoute = ProjectsNameServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => ProjectsNameRoute,
+} as any)
+const ProjectsNameEnvRoute = ProjectsNameEnvRouteImport.update({
+  id: '/env',
+  path: '/env',
+  getParentRoute: () => ProjectsNameRoute,
+} as any)
+const ProjectsNameContainersRoute = ProjectsNameContainersRouteImport.update({
+  id: '/containers',
+  path: '/containers',
+  getParentRoute: () => ProjectsNameRoute,
+} as any)
+const ProjectsNameServicesIndexRoute =
+  ProjectsNameServicesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProjectsNameServicesRoute,
+  } as any)
+const ProjectsNameServicesServiceRoute =
+  ProjectsNameServicesServiceRouteImport.update({
+    id: '/$service',
+    path: '/$service',
+    getParentRoute: () => ProjectsNameServicesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,9 +130,16 @@ export interface FileRoutesByFullPath {
   '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/projects/$name': typeof ProjectsNameRoute
+  '/projects/$name': typeof ProjectsNameRouteWithChildren
   '/containers/': typeof ContainersIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/projects/$name/containers': typeof ProjectsNameContainersRoute
+  '/projects/$name/env': typeof ProjectsNameEnvRoute
+  '/projects/$name/services': typeof ProjectsNameServicesRouteWithChildren
+  '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
+  '/projects/$name/': typeof ProjectsNameIndexRoute
+  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/': typeof ProjectsNameServicesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -97,9 +148,14 @@ export interface FileRoutesByTo {
   '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/projects/$name': typeof ProjectsNameRoute
   '/containers': typeof ContainersIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/projects/$name/containers': typeof ProjectsNameContainersRoute
+  '/projects/$name/env': typeof ProjectsNameEnvRoute
+  '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
+  '/projects/$name': typeof ProjectsNameIndexRoute
+  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services': typeof ProjectsNameServicesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -111,9 +167,16 @@ export interface FileRoutesById {
   '/containers/$id': typeof ContainersIdRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
-  '/projects/$name': typeof ProjectsNameRoute
+  '/projects/$name': typeof ProjectsNameRouteWithChildren
   '/containers/': typeof ContainersIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/projects/$name/containers': typeof ProjectsNameContainersRoute
+  '/projects/$name/env': typeof ProjectsNameEnvRoute
+  '/projects/$name/services': typeof ProjectsNameServicesRouteWithChildren
+  '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
+  '/projects/$name/': typeof ProjectsNameIndexRoute
+  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/': typeof ProjectsNameServicesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,6 +192,13 @@ export interface FileRouteTypes {
     | '/projects/$name'
     | '/containers/'
     | '/projects/'
+    | '/projects/$name/containers'
+    | '/projects/$name/env'
+    | '/projects/$name/services'
+    | '/projects/$name/volumes'
+    | '/projects/$name/'
+    | '/projects/$name/services/$service'
+    | '/projects/$name/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -137,9 +207,14 @@ export interface FileRouteTypes {
     | '/containers/$id'
     | '/demo/table'
     | '/demo/tanstack-query'
-    | '/projects/$name'
     | '/containers'
     | '/projects'
+    | '/projects/$name/containers'
+    | '/projects/$name/env'
+    | '/projects/$name/volumes'
+    | '/projects/$name'
+    | '/projects/$name/services/$service'
+    | '/projects/$name/services'
   id:
     | '__root__'
     | '/'
@@ -153,6 +228,13 @@ export interface FileRouteTypes {
     | '/projects/$name'
     | '/containers/'
     | '/projects/'
+    | '/projects/$name/containers'
+    | '/projects/$name/env'
+    | '/projects/$name/services'
+    | '/projects/$name/volumes'
+    | '/projects/$name/'
+    | '/projects/$name/services/$service'
+    | '/projects/$name/services/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -244,6 +326,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContainersIdRouteImport
       parentRoute: typeof ContainersRoute
     }
+    '/projects/$name/': {
+      id: '/projects/$name/'
+      path: '/'
+      fullPath: '/projects/$name/'
+      preLoaderRoute: typeof ProjectsNameIndexRouteImport
+      parentRoute: typeof ProjectsNameRoute
+    }
+    '/projects/$name/volumes': {
+      id: '/projects/$name/volumes'
+      path: '/volumes'
+      fullPath: '/projects/$name/volumes'
+      preLoaderRoute: typeof ProjectsNameVolumesRouteImport
+      parentRoute: typeof ProjectsNameRoute
+    }
+    '/projects/$name/services': {
+      id: '/projects/$name/services'
+      path: '/services'
+      fullPath: '/projects/$name/services'
+      preLoaderRoute: typeof ProjectsNameServicesRouteImport
+      parentRoute: typeof ProjectsNameRoute
+    }
+    '/projects/$name/env': {
+      id: '/projects/$name/env'
+      path: '/env'
+      fullPath: '/projects/$name/env'
+      preLoaderRoute: typeof ProjectsNameEnvRouteImport
+      parentRoute: typeof ProjectsNameRoute
+    }
+    '/projects/$name/containers': {
+      id: '/projects/$name/containers'
+      path: '/containers'
+      fullPath: '/projects/$name/containers'
+      preLoaderRoute: typeof ProjectsNameContainersRouteImport
+      parentRoute: typeof ProjectsNameRoute
+    }
+    '/projects/$name/services/': {
+      id: '/projects/$name/services/'
+      path: '/'
+      fullPath: '/projects/$name/services/'
+      preLoaderRoute: typeof ProjectsNameServicesIndexRouteImport
+      parentRoute: typeof ProjectsNameServicesRoute
+    }
+    '/projects/$name/services/$service': {
+      id: '/projects/$name/services/$service'
+      path: '/$service'
+      fullPath: '/projects/$name/services/$service'
+      preLoaderRoute: typeof ProjectsNameServicesServiceRouteImport
+      parentRoute: typeof ProjectsNameServicesRoute
+    }
   }
 }
 
@@ -261,13 +392,46 @@ const ContainersRouteWithChildren = ContainersRoute._addFileChildren(
   ContainersRouteChildren,
 )
 
+interface ProjectsNameServicesRouteChildren {
+  ProjectsNameServicesServiceRoute: typeof ProjectsNameServicesServiceRoute
+  ProjectsNameServicesIndexRoute: typeof ProjectsNameServicesIndexRoute
+}
+
+const ProjectsNameServicesRouteChildren: ProjectsNameServicesRouteChildren = {
+  ProjectsNameServicesServiceRoute: ProjectsNameServicesServiceRoute,
+  ProjectsNameServicesIndexRoute: ProjectsNameServicesIndexRoute,
+}
+
+const ProjectsNameServicesRouteWithChildren =
+  ProjectsNameServicesRoute._addFileChildren(ProjectsNameServicesRouteChildren)
+
+interface ProjectsNameRouteChildren {
+  ProjectsNameContainersRoute: typeof ProjectsNameContainersRoute
+  ProjectsNameEnvRoute: typeof ProjectsNameEnvRoute
+  ProjectsNameServicesRoute: typeof ProjectsNameServicesRouteWithChildren
+  ProjectsNameVolumesRoute: typeof ProjectsNameVolumesRoute
+  ProjectsNameIndexRoute: typeof ProjectsNameIndexRoute
+}
+
+const ProjectsNameRouteChildren: ProjectsNameRouteChildren = {
+  ProjectsNameContainersRoute: ProjectsNameContainersRoute,
+  ProjectsNameEnvRoute: ProjectsNameEnvRoute,
+  ProjectsNameServicesRoute: ProjectsNameServicesRouteWithChildren,
+  ProjectsNameVolumesRoute: ProjectsNameVolumesRoute,
+  ProjectsNameIndexRoute: ProjectsNameIndexRoute,
+}
+
+const ProjectsNameRouteWithChildren = ProjectsNameRoute._addFileChildren(
+  ProjectsNameRouteChildren,
+)
+
 interface ProjectsRouteChildren {
-  ProjectsNameRoute: typeof ProjectsNameRoute
+  ProjectsNameRoute: typeof ProjectsNameRouteWithChildren
   ProjectsIndexRoute: typeof ProjectsIndexRoute
 }
 
 const ProjectsRouteChildren: ProjectsRouteChildren = {
-  ProjectsNameRoute: ProjectsNameRoute,
+  ProjectsNameRoute: ProjectsNameRouteWithChildren,
   ProjectsIndexRoute: ProjectsIndexRoute,
 }
 

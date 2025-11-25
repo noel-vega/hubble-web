@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
 				throw redirect({ to: "/login" });
 			}
 		} catch (error) {
-			// If auth check fails, redirect to login
+			// If auth check fails or any error occurs, redirect to login
 			throw redirect({ to: "/login" });
 		}
 	},
