@@ -23,6 +23,7 @@ import { Route as ContainersIdRouteImport } from './routes/containers.$id'
 import { Route as ProjectsNameIndexRouteImport } from './routes/projects.$name.index'
 import { Route as ProjectsNameVolumesRouteImport } from './routes/projects.$name.volumes'
 import { Route as ProjectsNameServicesRouteImport } from './routes/projects.$name.services'
+import { Route as ProjectsNameNetworksRouteImport } from './routes/projects.$name.networks'
 import { Route as ProjectsNameEnvRouteImport } from './routes/projects.$name.env'
 import { Route as ProjectsNameContainersRouteImport } from './routes/projects.$name.containers'
 import { Route as ProjectsNameServicesIndexRouteImport } from './routes/projects.$name.services.index'
@@ -100,6 +101,11 @@ const ProjectsNameServicesRoute = ProjectsNameServicesRouteImport.update({
   path: '/services',
   getParentRoute: () => ProjectsNameRoute,
 } as any)
+const ProjectsNameNetworksRoute = ProjectsNameNetworksRouteImport.update({
+  id: '/networks',
+  path: '/networks',
+  getParentRoute: () => ProjectsNameRoute,
+} as any)
 const ProjectsNameEnvRoute = ProjectsNameEnvRouteImport.update({
   id: '/env',
   path: '/env',
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$name/containers': typeof ProjectsNameContainersRoute
   '/projects/$name/env': typeof ProjectsNameEnvRoute
+  '/projects/$name/networks': typeof ProjectsNameNetworksRoute
   '/projects/$name/services': typeof ProjectsNameServicesRouteWithChildren
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name/': typeof ProjectsNameIndexRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsIndexRoute
   '/projects/$name/containers': typeof ProjectsNameContainersRoute
   '/projects/$name/env': typeof ProjectsNameEnvRoute
+  '/projects/$name/networks': typeof ProjectsNameNetworksRoute
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name': typeof ProjectsNameIndexRoute
   '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRouteWithChildren
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/projects/': typeof ProjectsIndexRoute
   '/projects/$name/containers': typeof ProjectsNameContainersRoute
   '/projects/$name/env': typeof ProjectsNameEnvRoute
+  '/projects/$name/networks': typeof ProjectsNameNetworksRoute
   '/projects/$name/services': typeof ProjectsNameServicesRouteWithChildren
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name/': typeof ProjectsNameIndexRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/projects/'
     | '/projects/$name/containers'
     | '/projects/$name/env'
+    | '/projects/$name/networks'
     | '/projects/$name/services'
     | '/projects/$name/volumes'
     | '/projects/$name/'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/projects/$name/containers'
     | '/projects/$name/env'
+    | '/projects/$name/networks'
     | '/projects/$name/volumes'
     | '/projects/$name'
     | '/projects/$name/services/$service'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/projects/'
     | '/projects/$name/containers'
     | '/projects/$name/env'
+    | '/projects/$name/networks'
     | '/projects/$name/services'
     | '/projects/$name/volumes'
     | '/projects/$name/'
@@ -372,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsNameServicesRouteImport
       parentRoute: typeof ProjectsNameRoute
     }
+    '/projects/$name/networks': {
+      id: '/projects/$name/networks'
+      path: '/networks'
+      fullPath: '/projects/$name/networks'
+      preLoaderRoute: typeof ProjectsNameNetworksRouteImport
+      parentRoute: typeof ProjectsNameRoute
+    }
     '/projects/$name/env': {
       id: '/projects/$name/env'
       path: '/env'
@@ -464,6 +483,7 @@ const ProjectsNameServicesRouteWithChildren =
 interface ProjectsNameRouteChildren {
   ProjectsNameContainersRoute: typeof ProjectsNameContainersRoute
   ProjectsNameEnvRoute: typeof ProjectsNameEnvRoute
+  ProjectsNameNetworksRoute: typeof ProjectsNameNetworksRoute
   ProjectsNameServicesRoute: typeof ProjectsNameServicesRouteWithChildren
   ProjectsNameVolumesRoute: typeof ProjectsNameVolumesRoute
   ProjectsNameIndexRoute: typeof ProjectsNameIndexRoute
@@ -472,6 +492,7 @@ interface ProjectsNameRouteChildren {
 const ProjectsNameRouteChildren: ProjectsNameRouteChildren = {
   ProjectsNameContainersRoute: ProjectsNameContainersRoute,
   ProjectsNameEnvRoute: ProjectsNameEnvRoute,
+  ProjectsNameNetworksRoute: ProjectsNameNetworksRoute,
   ProjectsNameServicesRoute: ProjectsNameServicesRouteWithChildren,
   ProjectsNameVolumesRoute: ProjectsNameVolumesRoute,
   ProjectsNameIndexRoute: ProjectsNameIndexRoute,

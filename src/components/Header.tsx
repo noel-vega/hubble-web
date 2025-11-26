@@ -64,6 +64,10 @@ export function Header({ username }: HeaderProps) {
 					url: `/projects/${projectName}/containers`,
 				},
 				{
+					title: "Networks",
+					url: `/projects/${projectName}/networks`,
+				},
+				{
 					title: "Volumes",
 					url: `/projects/${projectName}/volumes`,
 				},
