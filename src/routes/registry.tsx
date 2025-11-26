@@ -60,7 +60,10 @@ function RouteComponent() {
 	}, [tagsQuery.data?.tags, tagSearch]);
 
 	const handleCopyTag = async (tag: string) => {
-		const fullImage = `${selectedRepo}:${tag}`;
+		const registryHost = repositoriesQuery.data?.registry || "";
+		const fullImage = registryHost
+			? `${registryHost}/${selectedRepo}:${tag}`
+			: `${selectedRepo}:${tag}`;
 		await navigator.clipboard.writeText(fullImage);
 		setCopiedTag(tag);
 		setTimeout(() => setCopiedTag(null), 2000);
@@ -200,7 +203,9 @@ function RouteComponent() {
 													)}
 												</div>
 												<p className="text-xs text-slate-500 dark:text-slate-500 mt-1 truncate">
-													{selectedRepo}:{tag}
+													{repositoriesQuery.data?.registry
+														? `${repositoriesQuery.data.registry}/${selectedRepo}:${tag}`
+														: `${selectedRepo}:${tag}`}
 												</p>
 											</button>
 										))}

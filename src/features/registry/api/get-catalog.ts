@@ -6,6 +6,7 @@ export const RepositoryInfoSchema = z.object({
 })
 
 export const ResponseSchema = z.object({
+  registry: z.string(),
   repositories: RepositoryInfoSchema.array(),
   count: z.number()
 })

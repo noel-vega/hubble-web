@@ -2,6 +2,7 @@
 import z from "zod"
 
 export const ResponseSchema = z.object({
+  registry: z.string(),
   repository: z.string(),
   tags: z.string().array(),
   count: z.number()

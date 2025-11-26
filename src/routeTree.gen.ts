@@ -28,6 +28,7 @@ import { Route as ProjectsNameContainersRouteImport } from './routes/projects.$n
 import { Route as ProjectsNameServicesIndexRouteImport } from './routes/projects.$name.services.index'
 import { Route as ProjectsNameServicesAddRouteImport } from './routes/projects.$name.services.add'
 import { Route as ProjectsNameServicesServiceRouteImport } from './routes/projects.$name.services.$service'
+import { Route as ProjectsNameServicesServiceEditRouteImport } from './routes/projects.$name.services.$service.edit'
 
 const RegistryRoute = RegistryRouteImport.update({
   id: '/registry',
@@ -126,6 +127,12 @@ const ProjectsNameServicesServiceRoute =
     path: '/$service',
     getParentRoute: () => ProjectsNameServicesRoute,
   } as any)
+const ProjectsNameServicesServiceEditRoute =
+  ProjectsNameServicesServiceEditRouteImport.update({
+    id: '/edit',
+    path: '/edit',
+    getParentRoute: () => ProjectsNameServicesServiceRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,9 +151,10 @@ export interface FileRoutesByFullPath {
   '/projects/$name/services': typeof ProjectsNameServicesRouteWithChildren
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name/': typeof ProjectsNameIndexRoute
-  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRouteWithChildren
   '/projects/$name/services/add': typeof ProjectsNameServicesAddRoute
   '/projects/$name/services/': typeof ProjectsNameServicesIndexRoute
+  '/projects/$name/services/$service/edit': typeof ProjectsNameServicesServiceEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -161,9 +169,10 @@ export interface FileRoutesByTo {
   '/projects/$name/env': typeof ProjectsNameEnvRoute
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name': typeof ProjectsNameIndexRoute
-  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRouteWithChildren
   '/projects/$name/services/add': typeof ProjectsNameServicesAddRoute
   '/projects/$name/services': typeof ProjectsNameServicesIndexRoute
+  '/projects/$name/services/$service/edit': typeof ProjectsNameServicesServiceEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -183,9 +192,10 @@ export interface FileRoutesById {
   '/projects/$name/services': typeof ProjectsNameServicesRouteWithChildren
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name/': typeof ProjectsNameIndexRoute
-  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRouteWithChildren
   '/projects/$name/services/add': typeof ProjectsNameServicesAddRoute
   '/projects/$name/services/': typeof ProjectsNameServicesIndexRoute
+  '/projects/$name/services/$service/edit': typeof ProjectsNameServicesServiceEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/projects/$name/services/$service'
     | '/projects/$name/services/add'
     | '/projects/$name/services/'
+    | '/projects/$name/services/$service/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/projects/$name/services/$service'
     | '/projects/$name/services/add'
     | '/projects/$name/services'
+    | '/projects/$name/services/$service/edit'
   id:
     | '__root__'
     | '/'
@@ -247,6 +259,7 @@ export interface FileRouteTypes {
     | '/projects/$name/services/$service'
     | '/projects/$name/services/add'
     | '/projects/$name/services/'
+    | '/projects/$name/services/$service/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -394,6 +407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsNameServicesServiceRouteImport
       parentRoute: typeof ProjectsNameServicesRoute
     }
+    '/projects/$name/services/$service/edit': {
+      id: '/projects/$name/services/$service/edit'
+      path: '/edit'
+      fullPath: '/projects/$name/services/$service/edit'
+      preLoaderRoute: typeof ProjectsNameServicesServiceEditRouteImport
+      parentRoute: typeof ProjectsNameServicesServiceRoute
+    }
   }
 }
 
@@ -411,14 +431,29 @@ const ContainersRouteWithChildren = ContainersRoute._addFileChildren(
   ContainersRouteChildren,
 )
 
+interface ProjectsNameServicesServiceRouteChildren {
+  ProjectsNameServicesServiceEditRoute: typeof ProjectsNameServicesServiceEditRoute
+}
+
+const ProjectsNameServicesServiceRouteChildren: ProjectsNameServicesServiceRouteChildren =
+  {
+    ProjectsNameServicesServiceEditRoute: ProjectsNameServicesServiceEditRoute,
+  }
+
+const ProjectsNameServicesServiceRouteWithChildren =
+  ProjectsNameServicesServiceRoute._addFileChildren(
+    ProjectsNameServicesServiceRouteChildren,
+  )
+
 interface ProjectsNameServicesRouteChildren {
-  ProjectsNameServicesServiceRoute: typeof ProjectsNameServicesServiceRoute
+  ProjectsNameServicesServiceRoute: typeof ProjectsNameServicesServiceRouteWithChildren
   ProjectsNameServicesAddRoute: typeof ProjectsNameServicesAddRoute
   ProjectsNameServicesIndexRoute: typeof ProjectsNameServicesIndexRoute
 }
 
 const ProjectsNameServicesRouteChildren: ProjectsNameServicesRouteChildren = {
-  ProjectsNameServicesServiceRoute: ProjectsNameServicesServiceRoute,
+  ProjectsNameServicesServiceRoute:
+    ProjectsNameServicesServiceRouteWithChildren,
   ProjectsNameServicesAddRoute: ProjectsNameServicesAddRoute,
   ProjectsNameServicesIndexRoute: ProjectsNameServicesIndexRoute,
 }

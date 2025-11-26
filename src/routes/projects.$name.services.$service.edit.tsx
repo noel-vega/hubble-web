@@ -1,7 +1,19 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { postAddService } from "@/features/projects/api/post-add-service";
+import {
+	createFileRoute,
+	useNavigate,
+	Link,
+	getRouteApi,
+} from "@tanstack/react-router";
+import {
+	useMutation,
+	useQuery,
+	useSuspenseQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
+import { updateProjectService } from "@/features/projects/api/update-service";
 import { getRegistryCatalog } from "@/features/registry/api/get-catalog";
+import type { ProjectComposeService } from "@/features/projects/types";
+import z from "zod";
 import {
 	ArrowLeft,
 	Loader2,
@@ -18,7 +30,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const Route = createFileRoute("/projects/$name/services/add")({
+const parentRoute = getRouteApi("/projects/$name/services");
+
+export const Route = createFileRoute("/projects/$name/services/$service/edit")({
 	component: RouteComponent,
 });
 
@@ -39,15 +53,12 @@ function ImageSelector({ value, onChange, disabled }: ImageSelectorProps) {
 
 	const allImages = useMemo(() => {
 		if (!catalogQuery.data?.repositories || !catalogQuery.data?.registry) {
-			console.log("No repositories data available");
 			return [];
 		}
-		console.log("Registry data:", catalogQuery.data);
 		const registryHost = catalogQuery.data.registry;
 		const images: { repo: string; tag: string; fullImage: string }[] = [];
 		for (const repo of catalogQuery.data.repositories) {
 			if (!repo.tags || repo.tags.length === 0) {
-				console.log(`Repository ${repo.name} has no tags`);
 				continue;
 			}
 			for (const tag of repo.tags) {
@@ -58,7 +69,6 @@ function ImageSelector({ value, onChange, disabled }: ImageSelectorProps) {
 				});
 			}
 		}
-		console.log(`Total images: ${images.length}`, images);
 		return images;
 	}, [catalogQuery.data]);
 
@@ -156,14 +166,6 @@ function ImageSelector({ value, onChange, disabled }: ImageSelectorProps) {
 										? "No images found matching your search"
 										: "No images available in registry"}
 								</p>
-								{!searchQuery &&
-									allImages.length === 0 &&
-									catalogQuery.data && (
-										<p className="text-xs text-slate-400">
-											Found {catalogQuery.data.repositories?.length || 0}{" "}
-											repositories
-										</p>
-									)}
 							</div>
 						)}
 					</div>
@@ -188,38 +190,73 @@ function ImageSelector({ value, onChange, disabled }: ImageSelectorProps) {
 }
 
 function RouteComponent() {
-	const { name } = Route.useParams();
+	const { name, service: serviceName } = Route.useParams();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
+	const { queryOptions } = parentRoute.useLoaderData();
+	const { data } = useSuspenseQuery(queryOptions);
+
+	const services = (
+		data as { services: z.infer<typeof ProjectComposeService>[] }
+	).services;
+
+	const service = services.find((s) => s.name === serviceName);
+
 	const [error, setError] = useState<string | null>(null);
 	const [activeTab, setActiveTab] = useState("basics");
 	const [formData, setFormData] = useState({
-		name: "",
-		image: "",
-		build: "",
-		ports: "",
-		environment: "",
-		volumes: "",
-		depends_on: "",
-		networks: "",
-		restart: "",
-		command: "",
+		name: service?.name || "",
+		image: service?.image || "",
+		build: service?.build || "",
+		ports: service?.ports?.join(", ") || "",
+		environment: service?.environment
+			? Object.entries(service.environment)
+					.map(([key, value]) => `${key}=${value}`)
+					.join(", ")
+			: "",
+		volumes: service?.volumes?.join(", ") || "",
+		depends_on: service?.depends_on?.join(", ") || "",
+		networks: service?.networks?.join(", ") || "",
+		restart: service?.restart || "",
+		command: service?.command || "",
 	});
-	const [labels, setLabels] = useState<{ key: string; value: string }[]>([
-		{ key: "", value: "" },
-	]);
+	const [labels, setLabels] = useState<{ key: string; value: string }[]>(
+		service?.labels && service.labels.length > 0
+			? service.labels.map((label) => {
+					const [key, ...valueParts] = label.split("=");
+					return { key, value: valueParts.join("=") };
+				})
+			: [{ key: "", value: "" }],
+	);
 
-	const addServiceMutation = useMutation({
-		mutationFn: postAddService,
+	const updateServiceMutation = useMutation({
+		mutationFn: updateProjectService,
 		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
 			navigate({
-				to: "/projects/$name/services",
-				params: { name },
+				to: "/projects/$name/services/$service",
+				params: { name, service: serviceName },
 			});
 		},
 		onError: (error: Error) => {
-			setError(error.message || "Failed to add service");
+			setError(error.message || "Failed to update service");
 		},
 	});
+
+	if (!service) {
+		return (
+			<div className="text-center py-12">
+				<p className="text-slate-500 dark:text-slate-400">Service not found</p>
+				<Link
+					to="/projects/$name/services"
+					params={{ name }}
+					className="text-blue-600 dark:text-blue-400 hover:underline mt-4 inline-block"
+				>
+					Back to services
+				</Link>
+			</div>
+		);
+	}
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -236,7 +273,7 @@ function RouteComponent() {
 
 		setError(null);
 
-		const service = {
+		const updatedService = {
 			name: formData.name.trim(),
 			image: formData.image.trim(),
 			build: formData.build.trim(),
@@ -283,7 +320,10 @@ function RouteComponent() {
 			command: formData.command.trim(),
 		};
 
-		addServiceMutation.mutate({ projectName: name, service });
+		updateServiceMutation.mutate({
+			projectName: name,
+			service: updatedService,
+		});
 	};
 
 	const handleInputChange = (field: string, value: string) => {
@@ -325,16 +365,16 @@ function RouteComponent() {
 				{/* Header */}
 				<div className="mb-8">
 					<Link
-						to="/projects/$name/services"
-						params={{ name }}
+						to="/projects/$name/services/$service"
+						params={{ name, service: serviceName }}
 						className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 mb-6 transition-colors group"
 					>
 						<ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-						Back to Services
+						Back to Service
 					</Link>
 
 					<h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-						Add Service
+						Edit Service: {serviceName}
 					</h1>
 				</div>
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -348,12 +388,11 @@ function RouteComponent() {
 										<Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
 										<div className="text-sm text-blue-900 dark:text-blue-200">
 											<p className="font-medium mb-1">
-												Docker Compose Service Configuration
+												Update Docker Compose Service
 											</p>
 											<p className="text-blue-700 dark:text-blue-300">
-												Configure your service with Docker Compose settings.
-												Fill in the basic information to get started, then
-												customize advanced settings as needed.
+												Modify your service configuration. Changes will be
+												applied to the Docker Compose file.
 											</p>
 										</div>
 									</div>
@@ -391,7 +430,7 @@ function RouteComponent() {
 														handleInputChange("name", e.target.value)
 													}
 													placeholder="web"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													A unique identifier for this service in your compose
@@ -409,7 +448,7 @@ function RouteComponent() {
 													onChange={(value) =>
 														handleInputChange("image", value)
 													}
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Select from registry or enter a Docker Hub image
@@ -429,7 +468,7 @@ function RouteComponent() {
 														handleInputChange("build", e.target.value)
 													}
 													placeholder="./path/to/dockerfile"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Path to build context (use instead of image to build
@@ -458,7 +497,7 @@ function RouteComponent() {
 														handleInputChange("ports", e.target.value)
 													}
 													placeholder="8080:80, 443:443"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Comma-separated port mappings in format HOST:CONTAINER
@@ -480,7 +519,7 @@ function RouteComponent() {
 														handleInputChange("networks", e.target.value)
 													}
 													placeholder="frontend, backend"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Comma-separated network names this service should
@@ -512,7 +551,7 @@ function RouteComponent() {
 														handleInputChange("volumes", e.target.value)
 													}
 													placeholder="./data:/app/data, ./config:/app/config"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Comma-separated volume mappings in format
@@ -549,7 +588,7 @@ function RouteComponent() {
 																	setLabels(newLabels);
 																}}
 																onPaste={(e) => handleLabelPaste(e, index)}
-																disabled={addServiceMutation.isPending}
+																disabled={updateServiceMutation.isPending}
 															/>
 															<Input
 																placeholder="Value (e.g., Web Server)"
@@ -560,7 +599,7 @@ function RouteComponent() {
 																	setLabels(newLabels);
 																}}
 																onPaste={(e) => handleLabelPaste(e, index)}
-																disabled={addServiceMutation.isPending}
+																disabled={updateServiceMutation.isPending}
 															/>
 														</div>
 														<Button
@@ -576,7 +615,7 @@ function RouteComponent() {
 																	setLabels([{ key: "", value: "" }]);
 																}
 															}}
-															disabled={addServiceMutation.isPending}
+															disabled={updateServiceMutation.isPending}
 															className="shrink-0"
 														>
 															<X className="w-4 h-4" />
@@ -590,7 +629,7 @@ function RouteComponent() {
 													onClick={() =>
 														setLabels([...labels, { key: "", value: "" }])
 													}
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 													className="w-full"
 												>
 													<Plus className="w-4 h-4 mr-2" />
@@ -616,16 +655,6 @@ function RouteComponent() {
 													</li>
 													<li>
 														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
-															com.example.team
-														</code>{" "}
-														={" "}
-														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
-															backend
-														</code>{" "}
-														- Team ownership
-													</li>
-													<li>
-														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
 															traefik.enable
 														</code>{" "}
 														={" "}
@@ -633,16 +662,6 @@ function RouteComponent() {
 															true
 														</code>{" "}
 														- Enable Traefik routing
-													</li>
-													<li>
-														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
-															prometheus.io/scrape
-														</code>{" "}
-														={" "}
-														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
-															true
-														</code>{" "}
-														- Enable Prometheus scraping
 													</li>
 												</ul>
 											</div>
@@ -671,7 +690,7 @@ function RouteComponent() {
 														handleInputChange("environment", e.target.value)
 													}
 													placeholder="NODE_ENV=production, PORT=3000"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Comma-separated environment variables in format
@@ -694,7 +713,7 @@ function RouteComponent() {
 														handleInputChange("depends_on", e.target.value)
 													}
 													placeholder="database, redis"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Comma-separated service names this service depends on
@@ -716,7 +735,7 @@ function RouteComponent() {
 														handleInputChange("restart", e.target.value)
 													}
 													placeholder="always"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Restart policy: always, unless-stopped, on-failure, or
@@ -739,7 +758,7 @@ function RouteComponent() {
 														handleInputChange("command", e.target.value)
 													}
 													placeholder="npm start"
-													disabled={addServiceMutation.isPending}
+													disabled={updateServiceMutation.isPending}
 												/>
 												<p className="text-xs text-slate-500 dark:text-slate-400">
 													Override the default container command
@@ -771,27 +790,27 @@ function RouteComponent() {
 									variant="outline"
 									onClick={() =>
 										navigate({
-											to: "/projects/$name/services",
-											params: { name },
+											to: "/projects/$name/services/$service",
+											params: { name, service: serviceName },
 										})
 									}
-									disabled={addServiceMutation.isPending}
+									disabled={updateServiceMutation.isPending}
 								>
 									<ArrowLeft className="w-4 h-4 mr-2" />
 									Cancel
 								</Button>
 								<Button
 									type="submit"
-									disabled={addServiceMutation.isPending}
+									disabled={updateServiceMutation.isPending}
 									className="bg-blue-600 hover:bg-blue-700 text-white"
 								>
-									{addServiceMutation.isPending ? (
+									{updateServiceMutation.isPending ? (
 										<>
 											<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-											Creating Service...
+											Updating Service...
 										</>
 									) : (
-										"Create Service"
+										"Update Service"
 									)}
 								</Button>
 							</div>
@@ -804,32 +823,18 @@ function RouteComponent() {
 							{/* Help Card */}
 							<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
 								<h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
-									Docker Compose Services
+									Editing Service
 								</h3>
 								<p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-									Services are the containerized applications that make up your
-									project. Each service runs in its own container and can be
-									configured independently.
+									Update the configuration for this Docker Compose service.
+									Changes will be saved to your project's compose file.
 								</p>
-								<div className="space-y-3">
-									<div>
-										<p className="text-sm font-medium text-slate-900 dark:text-white mb-1">
-											Quick Tips:
-										</p>
-										<ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1 list-disc list-inside">
-											<li>Use registry images for production</li>
-											<li>Build contexts for custom applications</li>
-											<li>Map ports to expose services</li>
-											<li>Set dependencies for startup order</li>
-										</ul>
-									</div>
-								</div>
 							</div>
 
 							{/* Project Info */}
 							<div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
 								<h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
-									Project Information
+									Service Information
 								</h3>
 								<dl className="space-y-2">
 									<div>
@@ -838,6 +843,22 @@ function RouteComponent() {
 										</dt>
 										<dd className="text-sm font-mono text-slate-900 dark:text-white">
 											{name}
+										</dd>
+									</div>
+									<div>
+										<dt className="text-xs text-slate-500 dark:text-slate-400">
+											Service Name
+										</dt>
+										<dd className="text-sm font-mono text-slate-900 dark:text-white">
+											{serviceName}
+										</dd>
+									</div>
+									<div>
+										<dt className="text-xs text-slate-500 dark:text-slate-400">
+											Status
+										</dt>
+										<dd className="text-sm font-mono text-slate-900 dark:text-white">
+											{service.status}
 										</dd>
 									</div>
 								</dl>
