@@ -1,14 +1,38 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+	useSuspenseQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import {
 	getProjects,
 	type ProjectInfo,
 	type ProjectsResponse,
 } from "@/features/projects/api/get-projects";
+import { postCreateProject } from "@/features/projects/api/post-create-project";
 import { fetchMe } from "@/features/auth/api/fetchMe";
-import { Search, FolderGit2, Server, Play, Square, Layers } from "lucide-react";
+import {
+	Search,
+	FolderGit2,
+	Server,
+	Play,
+	Square,
+	Layers,
+	Plus,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/projects/")({
 	beforeLoad: async ({ context }) => {
@@ -138,6 +162,95 @@ function ProjectCard({ project }: { project: ProjectInfo }) {
 	);
 }
 
+function CreateProjectDialog() {
+	const [open, setOpen] = useState(false);
+	const [projectName, setProjectName] = useState("");
+	const [error, setError] = useState<string | null>(null);
+	const queryClient = useQueryClient();
+
+	const createProjectMutation = useMutation({
+		mutationFn: postCreateProject,
+		onSuccess: () => {
+			setOpen(false);
+			setProjectName("");
+			setError(null);
+			// Invalidate and refetch projects
+			queryClient.invalidateQueries({ queryKey: ["projects"] });
+		},
+		onError: (error: Error) => {
+			setError(error.message || "Failed to create project");
+		},
+	});
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!projectName.trim()) {
+			setError("Project name is required");
+			return;
+		}
+		setError(null);
+		createProjectMutation.mutate({ name: projectName.trim() });
+	};
+
+	return (
+		<Dialog open={open} onOpenChange={setOpen}>
+			<DialogTrigger asChild>
+				<Button className="bg-blue-600 hover:bg-blue-700 text-white">
+					<Plus className="w-4 h-4" />
+					New Project
+				</Button>
+			</DialogTrigger>
+			<DialogContent className="sm:max-w-[425px]">
+				<form onSubmit={handleSubmit}>
+					<DialogHeader>
+						<DialogTitle>Create New Project</DialogTitle>
+						<DialogDescription>
+							Enter a name for your new Docker Compose project.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="grid gap-4 py-4">
+						<div className="grid gap-2">
+							<Label htmlFor="name">Project Name</Label>
+							<Input
+								id="name"
+								value={projectName}
+								onChange={(e) => setProjectName(e.target.value)}
+								placeholder="my-project"
+								className="col-span-3"
+								disabled={createProjectMutation.isPending}
+							/>
+							{error && (
+								<p className="text-sm text-red-600 dark:text-red-400">
+									{error}
+								</p>
+							)}
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setOpen(false)}
+							disabled={createProjectMutation.isPending}
+						>
+							Cancel
+						</Button>
+						<Button
+							type="submit"
+							disabled={createProjectMutation.isPending}
+							className="bg-blue-600 hover:bg-blue-700 text-white"
+						>
+							{createProjectMutation.isPending
+								? "Creating..."
+								: "Create Project"}
+						</Button>
+					</DialogFooter>
+				</form>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 function RouteComponent() {
 	const { queryOptions } = Route.useRouteContext();
 	const query = useSuspenseQuery(queryOptions);
@@ -170,13 +283,16 @@ function RouteComponent() {
 			<div className="max-w-7xl mx-auto px-6 py-8">
 				{/* Header */}
 				<div className="mb-8">
-					<div className="flex items-center gap-3 mb-2">
-						<div className="p-2 rounded-lg bg-blue-500/10">
-							<FolderGit2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+					<div className="flex items-center justify-between mb-2">
+						<div className="flex items-center gap-3">
+							<div className="p-2 rounded-lg bg-blue-500/10">
+								<FolderGit2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+							</div>
+							<h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+								Projects
+							</h1>
 						</div>
-						<h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-							Projects
-						</h1>
+						<CreateProjectDialog />
 					</div>
 					<p className="text-slate-600 dark:text-slate-400">
 						Manage your Docker Compose projects

@@ -40,6 +40,8 @@ export const ProjectComposeService = z.object({
   status: z.literal("running").or(z.literal("stopped")).or(z.literal("not_created"))
 })
 
+export type ProjectComposeService = z.infer<typeof ProjectComposeService>
+
 export type ProjectInfo = z.infer<typeof ProjectInfoSchema>;
 export type ProjectContainerInfo = z.infer<typeof ProjectContainerInfoSchema>;
 export type ProjectVolumeInfo = z.infer<typeof ProjectVolumeInfoSchema>;

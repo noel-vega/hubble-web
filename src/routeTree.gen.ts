@@ -26,6 +26,7 @@ import { Route as ProjectsNameServicesRouteImport } from './routes/projects.$nam
 import { Route as ProjectsNameEnvRouteImport } from './routes/projects.$name.env'
 import { Route as ProjectsNameContainersRouteImport } from './routes/projects.$name.containers'
 import { Route as ProjectsNameServicesIndexRouteImport } from './routes/projects.$name.services.index'
+import { Route as ProjectsNameServicesAddRouteImport } from './routes/projects.$name.services.add'
 import { Route as ProjectsNameServicesServiceRouteImport } from './routes/projects.$name.services.$service'
 
 const RegistryRoute = RegistryRouteImport.update({
@@ -114,6 +115,11 @@ const ProjectsNameServicesIndexRoute =
     path: '/',
     getParentRoute: () => ProjectsNameServicesRoute,
   } as any)
+const ProjectsNameServicesAddRoute = ProjectsNameServicesAddRouteImport.update({
+  id: '/add',
+  path: '/add',
+  getParentRoute: () => ProjectsNameServicesRoute,
+} as any)
 const ProjectsNameServicesServiceRoute =
   ProjectsNameServicesServiceRouteImport.update({
     id: '/$service',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name/': typeof ProjectsNameIndexRoute
   '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/add': typeof ProjectsNameServicesAddRoute
   '/projects/$name/services/': typeof ProjectsNameServicesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name': typeof ProjectsNameIndexRoute
   '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/add': typeof ProjectsNameServicesAddRoute
   '/projects/$name/services': typeof ProjectsNameServicesIndexRoute
 }
 export interface FileRoutesById {
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/projects/$name/volumes': typeof ProjectsNameVolumesRoute
   '/projects/$name/': typeof ProjectsNameIndexRoute
   '/projects/$name/services/$service': typeof ProjectsNameServicesServiceRoute
+  '/projects/$name/services/add': typeof ProjectsNameServicesAddRoute
   '/projects/$name/services/': typeof ProjectsNameServicesIndexRoute
 }
 export interface FileRouteTypes {
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/projects/$name/volumes'
     | '/projects/$name/'
     | '/projects/$name/services/$service'
+    | '/projects/$name/services/add'
     | '/projects/$name/services/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/projects/$name/volumes'
     | '/projects/$name'
     | '/projects/$name/services/$service'
+    | '/projects/$name/services/add'
     | '/projects/$name/services'
   id:
     | '__root__'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/projects/$name/volumes'
     | '/projects/$name/'
     | '/projects/$name/services/$service'
+    | '/projects/$name/services/add'
     | '/projects/$name/services/'
   fileRoutesById: FileRoutesById
 }
@@ -368,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsNameServicesIndexRouteImport
       parentRoute: typeof ProjectsNameServicesRoute
     }
+    '/projects/$name/services/add': {
+      id: '/projects/$name/services/add'
+      path: '/add'
+      fullPath: '/projects/$name/services/add'
+      preLoaderRoute: typeof ProjectsNameServicesAddRouteImport
+      parentRoute: typeof ProjectsNameServicesRoute
+    }
     '/projects/$name/services/$service': {
       id: '/projects/$name/services/$service'
       path: '/$service'
@@ -394,11 +413,13 @@ const ContainersRouteWithChildren = ContainersRoute._addFileChildren(
 
 interface ProjectsNameServicesRouteChildren {
   ProjectsNameServicesServiceRoute: typeof ProjectsNameServicesServiceRoute
+  ProjectsNameServicesAddRoute: typeof ProjectsNameServicesAddRoute
   ProjectsNameServicesIndexRoute: typeof ProjectsNameServicesIndexRoute
 }
 
 const ProjectsNameServicesRouteChildren: ProjectsNameServicesRouteChildren = {
   ProjectsNameServicesServiceRoute: ProjectsNameServicesServiceRoute,
+  ProjectsNameServicesAddRoute: ProjectsNameServicesAddRoute,
   ProjectsNameServicesIndexRoute: ProjectsNameServicesIndexRoute,
 }
 

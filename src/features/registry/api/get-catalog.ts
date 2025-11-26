@@ -11,6 +11,8 @@ export const ResponseSchema = z.object({
 })
 
 export async function getRegistryCatalog() {
-  const response = await fetch("/api/registry/repositories")
-  return ResponseSchema.parse(await response.json())
+  const response = await fetch("/api/registry/catalog")
+  const data = await response.json()
+  console.log("catalog", data)
+  return ResponseSchema.parse(data)
 }

@@ -7,19 +7,24 @@ import {
 import type { ProjectComposeService } from "@/features/projects/types";
 import { postServiceStart } from "@/features/projects/api/post-service-start";
 import { postServiceStop } from "@/features/projects/api/post-service-stop";
+import { deleteProjectService } from "@/features/projects/api/delete-service";
 
 const parentRoute = getRouteApi("/projects/$name/services");
-import {
-	Layers,
-	Play,
-	Square,
-	MoreVertical,
-	Box,
-	Plus,
-	Loader2,
-} from "lucide-react";
+import { Layers, Play, Square, Box, Plus, Loader2, Trash2 } from "lucide-react";
+import { useState } from "react";
 import z from "zod";
 import { Button } from "@/components/ui/button";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/projects/$name/services/")({
 	component: RouteComponent,
@@ -30,6 +35,7 @@ function RouteComponent() {
 	const { queryOptions } = parentRoute.useLoaderData();
 	const { data } = useSuspenseQuery(queryOptions);
 	const queryClient = useQueryClient();
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
 
 	const services = (
 		data as { services: z.infer<typeof ProjectComposeService>[] }
@@ -49,6 +55,14 @@ function RouteComponent() {
 		},
 	});
 
+	const deleteService = useMutation({
+		mutationFn: deleteProjectService,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: queryOptions.queryKey });
+			setDeleteDialogOpen(null);
+		},
+	});
+
 	return (
 		<div className="px-6 py-8">
 			{/* Header */}
@@ -61,13 +75,12 @@ function RouteComponent() {
 						Manage your Docker Compose services
 					</p>
 				</div>
-				<Button
-					onClick={() => console.log("Add service clicked")}
-					className="gap-2"
-				>
-					<Plus className="w-4 h-4" />
-					Add Service
-				</Button>
+				<Link to="/projects/$name/services/add" params={{ name }}>
+					<Button className="gap-2">
+						<Plus className="w-4 h-4" />
+						Add Service
+					</Button>
+				</Link>
 			</div>
 
 			{/* Services Table */}
@@ -207,13 +220,58 @@ function RouteComponent() {
 											)}
 										</Button>
 									)}
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+									<AlertDialog
+										open={deleteDialogOpen === service.name}
+										onOpenChange={(open) =>
+											setDeleteDialogOpen(open ? service.name : null)
+										}
 									>
-										<MoreVertical className="w-4 h-4" />
-									</Button>
+										<AlertDialogTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												onClick={(e) => e.stopPropagation()}
+												className="h-8 w-8 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+												title="Delete service"
+											>
+												<Trash2 className="w-4 h-4" />
+											</Button>
+										</AlertDialogTrigger>
+										<AlertDialogContent>
+											<AlertDialogHeader>
+												<AlertDialogTitle>Delete Service</AlertDialogTitle>
+												<AlertDialogDescription>
+													Are you sure you want to delete the service "
+													{service.name}"? This action cannot be undone and will
+													remove the service from your docker-compose.yml file.
+												</AlertDialogDescription>
+											</AlertDialogHeader>
+											<AlertDialogFooter>
+												<AlertDialogCancel>Cancel</AlertDialogCancel>
+												<AlertDialogAction
+													onClick={(e) => {
+														e.stopPropagation();
+														deleteService.mutate({
+															projectName: name,
+															serviceName: service.name,
+														});
+													}}
+													className="bg-red-600 hover:bg-red-700 text-white"
+												>
+													{deleteService.isPending &&
+													deleteService.variables?.serviceName ===
+														service.name ? (
+														<>
+															<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+															Deleting...
+														</>
+													) : (
+														"Delete Service"
+													)}
+												</AlertDialogAction>
+											</AlertDialogFooter>
+										</AlertDialogContent>
+									</AlertDialog>
 								</div>
 							</div>
 						))}
