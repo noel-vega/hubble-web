@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { postAddService } from "@/features/projects/api/post-add-service";
 import { getRegistryCatalog } from "@/features/registry/api/get-catalog";
@@ -9,6 +9,8 @@ import {
 	Check,
 	Info,
 	AlertCircle,
+	Plus,
+	X,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -201,6 +203,9 @@ function RouteComponent() {
 		restart: "",
 		command: "",
 	});
+	const [labels, setLabels] = useState<{ key: string; value: string }[]>([
+		{ key: "", value: "" },
+	]);
 
 	const addServiceMutation = useMutation({
 		mutationFn: postAddService,
@@ -258,6 +263,9 @@ function RouteComponent() {
 						.map((v) => v.trim())
 						.filter(Boolean)
 				: [],
+			labels: labels
+				.filter((label) => label.key.trim() && label.value.trim())
+				.map((label) => `${label.key.trim()}=${label.value.trim()}`),
 			depends_on: formData.depends_on
 				? formData.depends_on
 						.split(",")
@@ -283,32 +291,22 @@ function RouteComponent() {
 
 	return (
 		<div className="min-h-screen bg-slate-50 dark:bg-[#0d1117]">
-			{/* Top Navigation */}
-			<div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-				<div className="max-w-7xl mx-auto px-6 py-4">
-					<div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 mb-3">
-						<button
-							type="button"
-							onClick={() =>
-								navigate({
-									to: "/projects/$name/services",
-									params: { name },
-								})
-							}
-							className="hover:text-slate-900 dark:hover:text-white transition-colors"
-						>
-							Services
-						</button>
-						<span>/</span>
-						<span className="text-slate-900 dark:text-white">Add Service</span>
-					</div>
-					<h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+			<div className="max-w-7xl mx-auto px-6 py-8">
+				{/* Header */}
+				<div className="mb-8">
+					<Link
+						to="/projects/$name/services"
+						params={{ name }}
+						className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 mb-6 transition-colors group"
+					>
+						<ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+						Back to Services
+					</Link>
+
+					<h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
 						Add Service
 					</h1>
 				</div>
-			</div>
-
-			<div className="max-w-7xl mx-auto px-6 py-8">
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 					{/* Main Form */}
 					<div className="lg:col-span-2">
@@ -340,6 +338,7 @@ function RouteComponent() {
 										<TabsTrigger value="basics">Basics</TabsTrigger>
 										<TabsTrigger value="networking">Networking</TabsTrigger>
 										<TabsTrigger value="storage">Storage</TabsTrigger>
+										<TabsTrigger value="labels">Labels</TabsTrigger>
 										<TabsTrigger value="advanced">Advanced</TabsTrigger>
 									</TabsList>
 
@@ -489,6 +488,131 @@ function RouteComponent() {
 													Comma-separated volume mappings in format
 													HOST_PATH:CONTAINER_PATH
 												</p>
+											</div>
+										</div>
+									</TabsContent>
+
+									{/* Labels Tab */}
+									<TabsContent value="labels" className="p-6 space-y-6">
+										<div>
+											<h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+												Labels & Metadata
+											</h3>
+											<p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+												Add labels to your service for organization, filtering,
+												and integration with tools like Traefik, Prometheus, and
+												more.
+											</p>
+
+											{/* Labels Key-Value Pairs */}
+											<div className="space-y-3">
+												<Label className="text-sm font-medium">Labels</Label>
+												{labels.map((label, index) => (
+													<div key={index} className="flex gap-2 items-start">
+														<div className="flex-1 grid grid-cols-2 gap-2">
+															<Input
+																placeholder="Key (e.g., com.example.description)"
+																value={label.key}
+																onChange={(e) => {
+																	const newLabels = [...labels];
+																	newLabels[index].key = e.target.value;
+																	setLabels(newLabels);
+																}}
+																disabled={addServiceMutation.isPending}
+															/>
+															<Input
+																placeholder="Value (e.g., Web Server)"
+																value={label.value}
+																onChange={(e) => {
+																	const newLabels = [...labels];
+																	newLabels[index].value = e.target.value;
+																	setLabels(newLabels);
+																}}
+																disabled={addServiceMutation.isPending}
+															/>
+														</div>
+														<Button
+															type="button"
+															variant="outline"
+															size="icon"
+															onClick={() => {
+																if (labels.length > 1) {
+																	setLabels(
+																		labels.filter((_, i) => i !== index),
+																	);
+																} else {
+																	setLabels([{ key: "", value: "" }]);
+																}
+															}}
+															disabled={addServiceMutation.isPending}
+															className="shrink-0"
+														>
+															<X className="w-4 h-4" />
+														</Button>
+													</div>
+												))}
+												<Button
+													type="button"
+													variant="outline"
+													size="sm"
+													onClick={() =>
+														setLabels([...labels, { key: "", value: "" }])
+													}
+													disabled={addServiceMutation.isPending}
+													className="w-full"
+												>
+													<Plus className="w-4 h-4 mr-2" />
+													Add Label
+												</Button>
+											</div>
+
+											{/* Common Labels Examples */}
+											<div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+												<p className="text-sm font-medium text-slate-900 dark:text-white mb-2">
+													Common Label Examples:
+												</p>
+												<ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+													<li>
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															com.example.description
+														</code>{" "}
+														={" "}
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															My Service
+														</code>{" "}
+														- Service description
+													</li>
+													<li>
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															com.example.team
+														</code>{" "}
+														={" "}
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															backend
+														</code>{" "}
+														- Team ownership
+													</li>
+													<li>
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															traefik.enable
+														</code>{" "}
+														={" "}
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															true
+														</code>{" "}
+														- Enable Traefik routing
+													</li>
+													<li>
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															prometheus.io/scrape
+														</code>{" "}
+														={" "}
+														<code className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+															true
+														</code>{" "}
+														- Enable Prometheus scraping
+													</li>
+												</ul>
 											</div>
 										</div>
 									</TabsContent>

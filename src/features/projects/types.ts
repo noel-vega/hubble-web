@@ -33,6 +33,7 @@ export const ProjectComposeService = z.object({
   ports: z.string().array(),
   environment: z.record(z.string(), z.string()),
   volumes: z.string().array(),
+  labels: z.string().array(),
   depends_on: z.string().array(),
   networks: z.string().array(),
   restart: z.string(),
